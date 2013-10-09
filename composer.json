@@ -1,0 +1,26 @@
+{
+    "name": "benjaminlazarecki/npm-handler",
+    "description": "Run npm install through composer",
+    "keywords": ["composer", "npm", "package.json"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Benjamin Lazarecki",
+            "email": "benjamin.lazarecki@gmail.com",
+            "homepage": "http://benjamin-lazarecki.fr"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/process": "2.*",
+        "symfony/finder": "2.*"
+    },
+    "require-dev": {
+        "composer/composer": "1.*@alpha"
+    },
+    "autoload": {
+        "psr-0": { "Scar\\NpmHandler\\": "" }
+    },
+    "target-dir": "Scar/NpmHandler"
+}
