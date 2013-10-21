@@ -54,8 +54,37 @@ For example:
 
 Now each time you'll run `composer install` or `composer update` the command `npm install` will be call in the package.json dir.
 
-You can create multiple package.json` files anywhere in your project.
+You can create multiple `package.json` files anywhere in your project.
 
-If you want to install `devDependencies` you must run composer in dev mode.
+## Configuration
+
+In your composer.json file you can specified some packages to exclude in the extra block.
+
+```
+{
+   "extra": {
+        "npm-handler": {
+            "exclude-packages": {
+                "somedir",
+                "otherdir/package.json"
+            }
+        }
+    }
+}
+```
+
+You can also specified the absolute path for npm (useful when using multiple versions)
+
+```
+{
+   "extra": {
+        "npm-handler": {
+            "npm-path": "/path/to/npm"
+        }
+    }
+}
+```
+
+If you want to install `devDependencies` you must run composer in dev mode. `composer install --dev`
 
 Enjoy and feel free to contribute !

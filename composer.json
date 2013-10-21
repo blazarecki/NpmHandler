@@ -17,10 +17,14 @@
         "symfony/finder": "2.*"
     },
     "require-dev": {
-        "composer/composer": "1.*@alpha"
+        "composer/composer": "1.*@alpha",
+        "phpunit/phpunit": "3.7.*"
     },
     "autoload": {
         "psr-0": { "Scar\\NpmHandler\\": "" }
+    },
+    "config": {
+        "bin-dir": "bin"
     },
     "target-dir": "Scar/NpmHandler"
 }
