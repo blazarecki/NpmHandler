@@ -26,12 +26,14 @@ class NpmHandler {
         $npmManager = new NpmManager();
         $npmManager->setOutput($event->getIO());
 
+        $extra = $event->getComposer()->getPackage()->getExtra();
+
         $npmManager->process(
             getcwd(),
             $event->isDevMode(),
             $event->getIO()->isVerbose(),
-            self::getNpmPath($event->getComposer()->getPackage()->getExtra()),
-            self::getExcludedDirectories($event->getComposer()->getPackage()->getExtra())
+            self::getNpmPath($extra),
+            self::getExcludedDirectories($extra)
         );
     }
 
@@ -63,5 +65,7 @@ class NpmHandler {
         if (isset($extra['npm-handler']) && isset($extra['npm-handler']['npm-path'])) {
             return $extra['npm-handler']['npm-path'];
         }
+
+        return null;
     }
 }

@@ -1,3 +1,7 @@
 # Composer
 composer.lock
 vendor/
+bin/
+
+# Npm
+node_modules

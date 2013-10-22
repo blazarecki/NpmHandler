@@ -52,19 +52,24 @@ class NpmManager {
     /**
      * Processes the npm installation.
      *
-     * @param string  $rootPath  The npm root path.
-     * @param boolean $devMode   TRUE if the manager is in dev mode, else FALSE.
-     * @param boolean $verbose   TRUE if the manager is verbose else FALSE.
-     * @param string  $npmPath   Path to the npm executable
-     * @param array   $excludes  The paths to exclude.
+     * @param string      $rootPath  The npm root path.
+     * @param boolean     $devMode   TRUE if the manager is in dev mode, else FALSE.
+     * @param boolean     $verbose   TRUE if the manager is verbose else FALSE.
+     * @param null|string $npmPath   Path to the npm executable
+     * @param array       $excludes  The paths to exclude.
      */
-    public function process($rootPath, $devMode, $verbose = false, $npmPath, array $excludes = array())
+    public function process($rootPath, $devMode, $verbose = false, $npmPath = null, array $excludes = array())
     {
         $this->write('<info>NPM Components</info>');
         $that = $this;
 
         if ($npmPath === null) {
             $npmPath = 'npm';
+        }
+
+        $mode = null;
+        if (!$devMode) {
+            $mode = '--production';
         }
 
         foreach ($this->resolveNpmPaths($rootPath, $excludes) as $path) {
@@ -76,7 +81,7 @@ class NpmManager {
                     'cd %s && %s install %s',
                     escapeshellarg(dirname($path)),
                     $npmPath,
-                    $devMode
+                    $mode
                 )
             );
 

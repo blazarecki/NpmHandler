@@ -1,0 +1,11 @@
+{
+  "name": "npm-handler",
+  "description": "npm-handler packages dependencies",
+  "repository": {},
+  "dependencies" : {
+    "less"     :  "1.4.x"
+  },
+  "devDependencies": {
+    "phantomjs":  "1.9.x"
+  }
+}
