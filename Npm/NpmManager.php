@@ -14,8 +14,13 @@ namespace Scar\NpmHandler\Npm;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Process;
 
-class NpmManager {
-
+/**
+ * Npm manager.
+ *
+ * @author Benjamin Lazarecki <benjamin.lazarecki@gmail.com>
+ */
+class NpmManager
+{
     /** @var mixed */
     private $output;
 
@@ -52,27 +57,27 @@ class NpmManager {
     /**
      * Processes the npm installation.
      *
-     * @param string      $rootPath  The npm root path.
-     * @param boolean     $devMode   TRUE if the manager is in dev mode, else FALSE.
-     * @param boolean     $verbose   TRUE if the manager is verbose else FALSE.
-     * @param null|string $npmPath   Path to the npm executable
-     * @param array       $excludes  The paths to exclude.
+     * @param string      $rootPath      The npm root path.
+     * @param boolean     $devMode       TRUE if the manager is in dev mode, else FALSE.
+     * @param boolean     $verbose       TRUE if the manager is verbose else FALSE.
+     * @param null|string $npmExecutable Path to the npm executable
+     * @param array       $excludes      The paths to exclude.
      */
-    public function process($rootPath, $devMode, $verbose = false, $npmPath = null, array $excludes = array())
+    public function process($rootPath, $devMode, $verbose = false, $npmExecutable = null, array $excludes = array())
     {
         $this->write('<info>NPM Components</info>');
+
+        try {
+            $npmExecutable = $this->getNpmExecutablePath($npmExecutable, $rootPath);
+        } catch (\InvalidArgumentException $exception) {
+            $this->write($exception->getMessage());
+
+            return;
+        }
+
         $that = $this;
 
-        if ($npmPath === null) {
-            $npmPath = 'npm';
-        }
-
-        $mode = null;
-        if (!$devMode) {
-            $mode = '--production';
-        }
-
-        foreach ($this->resolveNpmPaths($rootPath, $excludes) as $path) {
+        foreach ($this->resolvePackagesPaths($rootPath, $excludes) as $path) {
             $name = str_replace($rootPath.DIRECTORY_SEPARATOR, '', $path);
             $this->write(sprintf('- Installing <comment>%s</comment>', $name));
 
@@ -80,14 +85,14 @@ class NpmManager {
                 sprintf(
                     'cd %s && %s install %s',
                     escapeshellarg(dirname($path)),
-                    $npmPath,
-                    $mode
+                    $npmExecutable,
+                    $devMode ? null : '--production'
                 )
             );
 
             $process->run(function ($type, $buffer) use ($that, $verbose) {
                 if ($verbose) {
-                    $that->write($buffer, false);
+                    $that->write($type === 'err' ? sprintf('<error>%s</error>', $buffer) : $buffer, false);
                 }
             });
 
@@ -111,14 +116,14 @@ class NpmManager {
     }
 
     /**
-     * Resolves the npm paths.
+     * Resolves the npm packages paths.
      *
      * @param string $rootPath The npm root path.
-     * @param array $excludes  Paths to exclude.
+     * @param array  $excludes Paths to excludes.
      *
-     * @return array The npm paths.
+     * @return array The npm packages paths.
      */
-    private function resolveNpmPaths($rootPath, array $excludes)
+    private function resolvePackagesPaths($rootPath, array $excludes)
     {
         $finder = Finder::create()
             ->in($rootPath)
@@ -132,5 +137,37 @@ class NpmManager {
 
 
         return iterator_to_array($finder);
+    }
+
+    /**
+     * Gets the npm executable path.
+     *
+     * @param string $npmPath  The npm path.
+     * @param string $rootPath The root path.
+     *
+     * @return string The npm executable path.
+     *
+     * @throws \InvalidArgumentException If npm executable path doesn't exists.
+     */
+    private function getNpmExecutablePath($npmPath, $rootPath)
+    {
+        if ($npmPath === null) {
+            return 'npm';
+        }
+
+        $isAbsolutePath = substr($npmPath, 0, 1) === DIRECTORY_SEPARATOR;
+        $executablePath = $isAbsolutePath ? realpath($npmPath) : realpath($rootPath.DIRECTORY_SEPARATOR.$npmPath);
+
+        if ($executablePath === false) {
+            $errorMessage = sprintf('%s Not Found', $npmPath);
+
+            if (!$isAbsolutePath) {
+                $errorMessage .= sprintf(' (Root path : %s)', $rootPath);
+            }
+
+            throw new \InvalidArgumentException(sprintf('<error>%s</error>', $errorMessage));
+        }
+
+        return $executablePath;
     }
 }

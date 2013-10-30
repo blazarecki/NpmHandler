@@ -12,7 +12,6 @@
 namespace Scar\NpmHandler\Tests\Composer;
 
 use Scar\NpmHandler\Composer\NpmHandler;
-use Symfony\Component\Finder\Finder;
 
 /**
  * Test the npm handler.
@@ -25,7 +24,7 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
     private $event;
 
     /** @var \Composer\IO\IOInterface */
-    private $io;
+    private $inOut;
 
     /** @var string */
     private $output;
@@ -38,8 +37,8 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
         $this->output = '';
         $output = &$this->output;
 
-        $this->io = $this->getMock('Composer\IO\IOInterface');
-        $this->io
+        $this->inOut = $this->getMock('Composer\IO\IOInterface');
+        $this->inOut
             ->expects($this->any())
             ->method('write')
             ->will($this->returnCallback(function ($message, $newLine) use (&$output) {
@@ -57,7 +56,7 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
         $this->event
             ->expects($this->any())
             ->method('getIO')
-            ->will($this->returnValue($this->io));
+            ->will($this->returnValue($this->inOut));
     }
 
     /**
@@ -92,7 +91,7 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
      */
     protected function setUpVerbosity($verbose = false)
     {
-        $this->io
+        $this->inOut
             ->expects($this->once())
             ->method('isVerbose')
             ->will($this->returnValue($verbose));
@@ -117,7 +116,7 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
     protected function tearDown()
     {
         unset($this->event);
-        unset($this->io);
+        unset($this->inOut);
         unset($this->output);
     }
 
@@ -152,23 +151,30 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
     /**
      * Installs the bower dependencies.
      *
-     * @param string  $expectedPattern The expected output pattern.
-     * @param array   $extra           The composer extra configuration.
-     * @param array   $npmPaths        The npm paths.
-     * @param boolean $verbose         TRUE if the output is verbose else FALSE.
-     * @param boolean $devMode         TRUE if the event is in dev mode else FALSE.
+     * @param string  $expectedPattern  The expected output pattern.
+     * @param array   $extra            The composer extra configuration.
+     * @param array   $npmPackagesPaths The npm paths.
+     * @param boolean $ensureFileExist  TRUE if ensure file exist is required.
+     * @param boolean $verbose          TRUE if the output is verbose else FALSE.
+     * @param boolean $devMode          TRUE if the event is in dev mode else FALSE.
      */
-    protected function install($expectedPattern, array $extra = array(), array $npmPaths = array(), $verbose = false, $devMode = false)
-    {
-        if (empty($npmPaths)) {
-            $npmPaths = array(
+    protected function install(
+        $expectedPattern,
+        array $extra = array(),
+        array $npmPackagesPaths = array(),
+        $ensureFileExist = true,
+        $verbose = false,
+        $devMode = false
+    ) {
+        if (empty($npmPackagesPaths)) {
+            $npmPackagesPaths = array(
                 __DIR__.'/Fixtures/node_modules',
                 __DIR__.'/Fixtures/subdir/node_modules',
             );
         }
 
-        foreach ($npmPaths as $npmPath) {
-            $this->unlink($npmPath);
+        foreach ($npmPackagesPaths as $npmPackagePath) {
+            $this->unlink($npmPackagePath);
         }
 
         chdir(__DIR__.'/Fixtures');
@@ -179,15 +185,10 @@ class NpmHandlerTest extends \PHPUnit_Framework_TestCase
 
         NpmHandler::install($this->event);
 
-        foreach ($npmPaths as $npmPath) {
-            $this->assertFileExists($npmPath);
-            $this->assertFileExists($npmPath.'/less');
-
-            if ($devMode) {
-                $this->assertFileExists($npmPath.'/phantomjs');
-            } else {
-                $this->assertFileNotExists($npmPath.'/phantomjs');
-            }
+        foreach ($npmPackagesPaths as $npmPackagePath) {
+            $this->assertSame($ensureFileExist, file_exists($npmPackagePath));
+            $this->assertSame($ensureFileExist, file_exists($npmPackagePath.'/less'));
+            $this->assertSame($ensureFileExist && $devMode, file_exists($npmPackagePath.'/phantomjs'));
         }
 
         $this->assertRegExp($expectedPattern, $this->output);
@@ -226,6 +227,28 @@ EOF;
         }
     }
 
+    public function testInvalidAbsoluteNpmExecutablePath()
+    {
+        $expectedPattern = <<<EOF
+#^<info>NPM Components</info>
+<error>/foo/npm Not Found</error>$#
+EOF;
+        $extra = array('npm-handler' => array('npm-path' => '/foo/npm'));
+
+        $this->install($expectedPattern, $extra, array(), false);
+    }
+
+    public function testInvalidRelativeNpmExecutablePath()
+    {
+        $expectedPattern = <<<EOF
+#^<info>NPM Components</info>
+<error>foo/npm Not Found \(Root path : (.)*/NpmHandler/Tests/Composer/Fixtures\)</error>$#
+EOF;
+        $extra = array('npm-handler' => array('npm-path' => 'foo/npm'));
+
+        $this->install($expectedPattern, $extra, array(), false);
+    }
+
     public function testInstallWithVerbosity()
     {
         $expectedPattern = <<<EOF
@@ -236,7 +259,7 @@ EOF;
 (.|\n)+$#
 EOF;
 
-        $this->install($expectedPattern, array(), array(), true);
+        $this->install($expectedPattern, array(), array(), true, true);
     }
 
     public function testInstallWithDevMode()
@@ -247,6 +270,6 @@ EOF;
 - Installing <comment>subdir/package.json</comment>$#
 EOF;
 
-        $this->install($expectedPattern, array(), array(), false, true);
+        $this->install($expectedPattern, array(), array(), true, false, true);
     }
 }
