@@ -73,7 +73,7 @@ In your composer.json file you can specified some packages to exclude in the ext
 }
 ```
 
-You can also specified the absolute path for npm (useful when using multiple versions)
+You can also specified the absolute or relative path to npm executable (useful when using multiple versions)
 
 ```
 {

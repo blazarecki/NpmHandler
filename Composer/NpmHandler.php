@@ -14,8 +14,13 @@ namespace Scar\NpmHandler\Composer;
 use Composer\Script\Event;
 use Scar\NpmHandler\Npm\NpmManager;
 
-class NpmHandler {
-
+/**
+ * Npm handler.
+ *
+ * @author Benjamin Lazarecki <benjamin.lazarecki@gmail.com>
+ */
+class NpmHandler
+{
     /**
      * Install the bower packages.
      *
@@ -32,7 +37,7 @@ class NpmHandler {
             getcwd(),
             $event->isDevMode(),
             $event->getIO()->isVerbose(),
-            self::getNpmPath($extra),
+            self::getNpmExecutablePath($extra),
             self::getExcludedDirectories($extra)
         );
     }
@@ -60,7 +65,7 @@ class NpmHandler {
      *
      * @return null|string The path to npm executable if it's in extra parameters.
      */
-    protected static function getNpmPath(array $extra)
+    protected static function getNpmExecutablePath(array $extra)
     {
         if (isset($extra['npm-handler']) && isset($extra['npm-handler']['npm-path'])) {
             return $extra['npm-handler']['npm-path'];
