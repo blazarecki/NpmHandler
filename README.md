@@ -9,7 +9,7 @@ Require the npm handler in your composer.json file:
 ```
 {
     "require": {
-        "benjaminlazarecki/npm-handler": "0.1.*",
+        "blazarecki/npm-handler": "0.1.*",
     }
 }
 ```
